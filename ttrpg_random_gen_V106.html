@@ -82,7 +82,8 @@
             transition: margin-right 0.3s ease;
         }
 
-        .main-content.sidebar-open {
+        .main-content.sidebar-open,
+        .main-content.combo-sidebar-open {
             margin-right: 320px;
         }
 
@@ -1064,7 +1065,8 @@
             padding-right: 12px;
         }
 
-        .history-toggle.sidebar-open {
+        .history-toggle.sidebar-open,
+        #comboToggle.sidebar-open {
             right: 320px;
         }
 
@@ -1162,10 +1164,31 @@
         </div>
     </div>
 
+    <!-- Combo Toggle Button -->
+    <button class="history-toggle no-print" id="comboToggle" onclick="toggleComboSidebar()" style="top: calc(50% - 50px);">
+        ✨
+    </button>
+
     <!-- History Toggle Button -->
     <button class="history-toggle no-print" id="historyToggle" onclick="toggleHistorySidebar()">
         📜
     </button>
+
+    <!-- Combo Sidebar -->
+    <div class="history-sidebar no-print" id="comboSidebar">
+        <div class="history-header">
+            <h3>✨ Quick Combos</h3>
+            <button class="btn btn-secondary btn-sm" onclick="showComboBuilder()">+ New</button>
+        </div>
+        <div class="history-list" id="comboListSidebar">
+            <!-- Dynamically populated -->
+        </div>
+        <div class="history-footer">
+            <small style="color: var(--text-secondary); display: block; text-align: center;">
+                Click to roll a combo
+            </small>
+        </div>
+    </div>
 
     <!-- History Sidebar -->
     <div class="history-sidebar no-print" id="historySidebar">
@@ -1472,7 +1495,9 @@
         let savedCombos = [];
         let editingComboId = null;
         let historySidebarOpen = true;
+        let comboSidebarOpen = false;
         let pinnedRolls = new Set();
+        let pinnedCombos = new Set();
         let draggedElement = null;
         let draggedIndex = null;
 
@@ -2107,18 +2132,7 @@
             }
         ];
 
-        // Initialize app
-        function init() {
-            loadTables();
-            loadHistory();
-            loadCombos();
-            loadPinnedRolls();
-            loadTheme();
-            loadHistorySidebarState();
-            setupEventListeners();
-            switchTab('tables');
-            renderHistorySidebar();
-        }
+        // All functions moved to global scope
 
         // Load tables
         function loadTables() {
@@ -2166,6 +2180,15 @@
             localStorage.setItem('pinned_rolls', JSON.stringify([...pinnedRolls]));
         }
 
+        function loadPinnedCombos() {
+            const stored = localStorage.getItem('pinned_combos');
+            pinnedCombos = stored ? new Set(JSON.parse(stored)) : new Set();
+        }
+
+        function savePinnedCombos() {
+            localStorage.setItem('pinned_combos', JSON.stringify([...pinnedCombos]));
+        }
+
         function loadCombos() {
             const stored = localStorage.getItem('saved_combos');
             savedCombos = stored ? JSON.parse(stored) : [];
@@ -2188,9 +2211,85 @@
             saveHistory();
         }
 
+        // Combo Sidebar Functions
+        function toggleComboSidebar(forceState) {
+            comboSidebarOpen = forceState !== undefined ? forceState : !comboSidebarOpen;
+            if (comboSidebarOpen) {
+                historySidebarOpen = false; // Close history sidebar
+                toggleHistorySidebar(false);
+            }
+            const sidebar = document.getElementById('comboSidebar');
+            const toggle = document.getElementById('comboToggle');
+            const mainContent = document.querySelector('.main-content');
+
+            if (comboSidebarOpen) {
+                sidebar.classList.remove('collapsed');
+                toggle.classList.add('sidebar-open');
+                mainContent.classList.add('combo-sidebar-open');
+                renderComboSidebar();
+            } else {
+                sidebar.classList.add('collapsed');
+                toggle.classList.remove('sidebar-open');
+                mainContent.classList.remove('combo-sidebar-open');
+            }
+
+            localStorage.setItem('combo_sidebar_open', comboSidebarOpen);
+        }
+
+        function renderComboSidebar() {
+            const container = document.getElementById('comboListSidebar');
+
+            if (savedCombos.length === 0) {
+                container.innerHTML = `
+                    <div class="history-empty">
+                        <p style="font-size: 40px; margin-bottom: 8px;">✨</p>
+                        <p>No saved combos</p>
+                        <button class="btn btn-primary btn-sm" style="margin-top: 12px;" onclick="showComboBuilder()">Create One</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = savedCombos.map(combo => {
+                const isPinned = pinnedCombos.has(combo.id);
+                return `
+                    <div class="history-entry ${isPinned ? 'pinned' : ''}" onclick="loadAndRollCombo('${combo.id}')">
+                        <button class="pin-btn" onclick="event.stopPropagation(); toggleComboPin('${combo.id}')" title="${isPinned ? 'Unpin' : 'Pin'}">
+                            ${isPinned ? '📌' : '📍'}
+                        </button>
+                        <div class="history-entry-header">
+                            <div class="history-entry-title">${escapeHtml(combo.name)}</div>
+                        </div>
+                        <div class="history-entry-actions">
+                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); loadAndRollCombo('${combo.id}')">
+                                🎲 Roll
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); loadCombo('${combo.id}'); closeComboBuilder();">
+                                ✎
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleComboPin(comboId) {
+            if (pinnedCombos.has(comboId)) {
+                pinnedCombos.delete(comboId);
+            } else {
+                pinnedCombos.add(comboId);
+            }
+            savePinnedCombos();
+            renderComboSidebar();
+        }
+
         // History Sidebar Functions
-        function toggleHistorySidebar() {
-            historySidebarOpen = !historySidebarOpen;
+        function toggleHistorySidebar(forceState) {
+            historySidebarOpen = forceState !== undefined ? forceState : !historySidebarOpen;
+             if (historySidebarOpen) {
+                comboSidebarOpen = false; // Close combo sidebar
+                toggleComboSidebar(false);
+            }
             const sidebar = document.getElementById('historySidebar');
             const toggle = document.getElementById('historyToggle');
             const mainContent = document.querySelector('.main-content');
@@ -2216,13 +2315,31 @@
             const toggle = document.getElementById('historyToggle');
             const mainContent = document.querySelector('.main-content');
             
-            if (!historySidebarOpen) {
+            if (historySidebarOpen) {
+                sidebar.classList.remove('collapsed');
+                toggle.classList.add('sidebar-open');
+                mainContent.classList.add('sidebar-open');
+            } else {
                 sidebar.classList.add('collapsed');
                 toggle.classList.remove('sidebar-open');
                 mainContent.classList.remove('sidebar-open');
-            } else {
+            }
+        }
+
+        function loadComboSidebarState() {
+            const stored = localStorage.getItem('combo_sidebar_open');
+            comboSidebarOpen = stored === 'true';
+
+            const sidebar = document.getElementById('comboSidebar');
+            const toggle = document.getElementById('comboToggle');
+            const mainContent = document.querySelector('.main-content');
+
+            if (comboSidebarOpen) {
+                sidebar.classList.remove('collapsed');
                 toggle.classList.add('sidebar-open');
-                mainContent.classList.add('sidebar-open');
+                mainContent.classList.add('combo-sidebar-open');
+            } else {
+                sidebar.classList.add('collapsed');
             }
         }
 
@@ -2543,12 +2660,18 @@
                 allTags.map(tag => `<option value="${tag}">${tag}</option>`).join('');
             tagFilter.value = currentTag;
 
-            container.innerHTML = filtered.map(table => `
+            container.innerHTML = filtered.map(table => {
+                const hasChains = table.entries.some(e => e.chains && e.chains.length > 0);
+                return `
                 <div class="table-item ${table.favorite ? 'favorited' : ''}" onclick="viewTable('${table.id}')">
                     <span class="favorite-star" onclick="event.stopPropagation(); toggleFavorite('${table.id}')">
                         ${table.favorite ? '⭐' : '☆'}
                     </span>
-                    <h3>${escapeHtml(table.name)}${table.weighted ? '<span class="badge pro">WEIGHTED</span>' : ''}</h3>
+                    <h3>
+                        ${escapeHtml(table.name)}
+                        ${hasChains ? '<span class="badge chain" style="margin-left: 8px;">⛓️</span>' : ''}
+                        ${table.weighted ? '<span class="badge pro">WEIGHTED</span>' : ''}
+                    </h3>
                     <p>${escapeHtml(table.description || 'No description')}</p>
                     ${table.tags.length > 0 ? `
                         <div class="table-tags">
@@ -4939,6 +5062,85 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        setupEventListeners();
+        // --- UI Functions (moved to global scope) ---
+
+        function closeModal() {
+            document.getElementById('tableModal').classList.remove('active');
+        }
+
+        function closeMultiRollModal() {
+            document.getElementById('multiRollModal').classList.remove('active');
+        }
+
+        function closeComboBuilder() {
+            document.getElementById('comboBuilderModal').classList.remove('active');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.remove('active');
+        }
+
+        function closeMergeModal() {
+            document.getElementById('mergeTablesModal').classList.remove('active');
+        }
+
+        function closeTablePacks() {
+            document.getElementById('tablePacksModal').classList.remove('active');
+        }
+
+        function closePackPreview() {
+            document.getElementById('packPreviewModal').classList.remove('active');
+        }
+
+        function closeQuickCombos() {
+            document.getElementById('quickCombosModal').classList.remove('active');
+        }
+
+        function goHome() {
+            document.getElementById('homeView').classList.remove('hidden');
+            document.getElementById('tableView').classList.add('hidden');
+            document.getElementById('diceView').classList.add('hidden');
+            currentTable = null;
+            switchTab('tables');
+        }
+
+        function rollDice(sides) {
+            const result = getSecureRandomInt(1, sides + 1);
+            playSound(440, 100);
+            addToHistory(`d${sides}`, `${result}`, `d${sides}`);
+
+            const resultsDiv = document.getElementById('diceResults');
+            resultsDiv.innerHTML = `
+                <div class="roll-result">
+                    <h2>🎲 d${sides}</h2>
+                    <p style="font-size: 48px; font-weight: bold;">${result}</p>
+                </div>
+            `;
+        }
+
+        function rollCustomDice() {
+            const formula = document.getElementById('customDice').value.trim();
+            if (!formula) return;
+
+            try {
+                const result = parseDiceFormula(formula);
+                playSound(440, 100);
+                addToHistory(formula, `${result.total}`);
+
+                const resultsDiv = document.getElementById('diceResults');
+                resultsDiv.innerHTML = `
+                    <div class="roll-result">
+                        <h2>🎲 ${escapeHtml(formula)}</h2>
+                        <p style="font-size: 36px; font-weight: bold;">${result.total}</p>
+                        <p style="font-size: 14px; opacity: 0.8; margin-top: 8px;">${result.breakdown}</p>
+                    </div>
+                `;
+            } catch (e) {
+                alert('Invalid dice formula. Use format like: 2d6+3, 1d20-1, 3d8');
+            }
         }
 
         // Initialize
