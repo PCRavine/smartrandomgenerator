@@ -2252,7 +2252,7 @@
             container.innerHTML = sorted.map(item => {
                 const isPinned = pinnedRolls.has(item.id);
                 return `
-                    <div class="history-entry ${isPinned ? 'pinned' : ''}" onclick="rerollFromSidebar('${item.tableName}', '${item.type}')">
+                    <div class="history-entry ${isPinned ? 'pinned' : ''}" onclick="rerollFromSidebar('${item.id}')">
                         <button class="pin-btn" onclick="event.stopPropagation(); togglePin('${item.id}')" title="${isPinned ? 'Unpin' : 'Pin'}">
                             ${isPinned ? '📌' : '📍'}
                         </button>
@@ -2262,7 +2262,7 @@
                         </div>
                         <div class="history-entry-result">${escapeHtml(item.result)}</div>
                         <div class="history-entry-actions">
-                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); rerollFromSidebar('${item.tableName}', '${item.type}')">
+                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); rerollFromSidebar('${item.id}')">
                                 🎲 Reroll
                             </button>
                             <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); copyToClipboard('${escapeHtml(item.result)}')">
@@ -2293,7 +2293,15 @@
             renderHistorySidebar();
         }
 
-        function rerollFromSidebar(tableName, type, metadata) {
+        function rerollFromSidebar(historyId) {
+            const historyItem = rollHistory.find(item => item.id === historyId);
+            if (!historyItem) {
+                showToast('History item not found', 'error');
+                return;
+            }
+
+            const { tableName, type, metadata } = historyItem;
+
             if (type === 'table') {
                 const table = tables.find(t => t.name === tableName);
                 if (table) {
@@ -2303,21 +2311,18 @@
                     showToast('Table not found. It may have been deleted.', 'error');
                 }
             } else if (type === 'combo') {
-                // Reroll combo from history
                 if (metadata && metadata.template && metadata.tableSlots) {
                     rerollComboFromResult(metadata);
                 } else {
                     showToast('Cannot reroll this combo (missing metadata)', 'error');
                 }
             } else if (type === 'multi-roll') {
-                // Reroll multi-table from history
                 if (metadata && metadata.tableIds) {
                     rerollMultiTableFromHistory(metadata.tableIds);
                 } else {
                     showToast('Cannot reroll multi-table (metadata missing)', 'error');
                 }
-            } else if (type.startsWith('d')) {
-                // Dice roll
+            } else if (type && type.startsWith('d')) {
                 const sides = parseInt(type.substring(1));
                 showDiceRoller();
                 setTimeout(() => rollDice(sides), 100);
@@ -2390,7 +2395,7 @@
                             </div>
                             <div style="text-align: right;">
                                 <div class="history-time">${formatTime(item.timestamp)}</div>
-                                <button class="btn btn-secondary btn-sm" onclick="rerollFromSidebar('${item.tableName}', '${item.type}', ${JSON.stringify(item.metadata || {}).replace(/"/g, '&quot;')})" style="margin-top: 4px;">
+                                <button class="btn btn-secondary btn-sm" onclick="rerollFromSidebar('${item.id}')" style="margin-top: 4px;">
                                     ↻ Roll Again
                                 </button>
                             </div>
@@ -2700,6 +2705,72 @@
 
             document.body.appendChild(backdrop);
             document.body.appendChild(resultDiv);
+        }
+
+        function rerollComboFromResult(metadata) {
+            if (!metadata || !metadata.template || !metadata.tableSlots) {
+                showToast('Cannot reroll combo: missing metadata', 'error');
+                return;
+            }
+
+            let result = metadata.template;
+            const usedTables = [];
+            const allChainResults = []; // To hold all chain results from all tables in the combo
+
+            metadata.tableSlots.forEach((tableId, index) => {
+                if (tableId) {
+                    const table = tables.find(t => t.id === tableId);
+                    if (table && table.entries.length > 0) {
+                        const entry = table.weighted ?
+                            rollWeighted(table.entries, table.id) :
+                            rollUnweighted(table.entries, table.id);
+
+                        if (entry) {
+                            const mainText = entry.text;
+                            result = result.replace(new RegExp(`\\{${index}\\}`, 'g'), mainText);
+                            usedTables.push(table.name);
+                            table.rollCount = (table.rollCount || 0) + 1;
+
+                            // Execute chains for this specific table entry
+                            if (entry.chains && entry.chains.length > 0) {
+                                entry.chains.forEach(chainTableId => {
+                                    const chainTable = tables.find(t => t.id === chainTableId);
+                                    if (chainTable && chainTable.entries.length > 0) {
+                                        const chainEntry = chainTable.weighted ?
+                                            rollWeighted(chainTable.entries, chainTable.id) :
+                                            rollUnweighted(chainTable.entries, chainTable.id);
+                                        if (chainEntry) {
+                                            allChainResults.push({
+                                                sourceTable: table.name,
+                                                tableName: chainTable.name,
+                                                result: processDiceInText(chainEntry.text)
+                                            });
+                                            chainTable.rollCount = (chainTable.rollCount || 0) + 1;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+
+            const processedResult = processDiceInText(result);
+            saveTables();
+            playSound(440, 150);
+
+            const comboName = metadata.name || 'Unnamed Combo';
+
+            // Construct a full result string for history, including chains
+            let fullResultForHistory = result;
+            if (allChainResults.length > 0) {
+                fullResultForHistory += ' → ' + allChainResults.map(cr => `${cr.tableName}: ${cr.result.replace(/<[^>]*>/g, '')}`).join(' → ');
+            }
+
+            addToHistory('Combo: ' + comboName, fullResultForHistory, 'combo', metadata);
+
+            closeQuickRollResult(); // Close previous result if open
+            showComboResultWithReroll(comboName, processedResult, usedTables, metadata, allChainResults);
         }
 
         function closeQuickRollResult() {
@@ -3463,47 +3534,72 @@
 
         function rollCombo() {
             const validation = validateCombo();
-            
             if (!validation.valid) {
                 alert('⚠️ ' + validation.message);
                 return;
             }
 
+            const comboName = document.getElementById('comboName').value.trim() || 'Unnamed Combo';
             const template = document.getElementById('comboTemplate').value.trim();
             const selects = document.querySelectorAll('.combo-table-select');
-            
+            const tableSlots = Array.from(selects).map(s => s.value);
+
             let result = template;
             const usedTables = [];
-            
-            selects.forEach((select, index) => {
-                const tableId = select.value;
+            const allChainResults = [];
+
+            tableSlots.forEach((tableId, index) => {
                 if (tableId) {
                     const table = tables.find(t => t.id === tableId);
                     if (table && table.entries.length > 0) {
-                        const entry = table.weighted ? 
+                        const entry = table.weighted ?
                             rollWeighted(table.entries, table.id) :
                             rollUnweighted(table.entries, table.id);
+
                         if (entry) {
                             result = result.replace(new RegExp(`\\{${index}\\}`, 'g'), entry.text);
                             usedTables.push(table.name);
                             table.rollCount = (table.rollCount || 0) + 1;
+
+                            // Execute chains
+                            if (entry.chains && entry.chains.length > 0) {
+                                entry.chains.forEach(chainTableId => {
+                                    const chainTable = tables.find(t => t.id === chainTableId);
+                                    if (chainTable && chainTable.entries.length > 0) {
+                                        const chainEntry = chainTable.weighted ?
+                                            rollWeighted(chainTable.entries, chainTable.id) :
+                                            rollUnweighted(chainTable.entries, chainTable.id);
+                                        if (chainEntry) {
+                                            allChainResults.push({
+                                                sourceTable: table.name,
+                                                tableName: chainTable.name,
+                                                result: processDiceInText(chainEntry.text)
+                                            });
+                                            chainTable.rollCount = (chainTable.rollCount || 0) + 1;
+                                        }
+                                    }
+                                });
+                            }
                         }
                     }
                 }
             });
 
-            // Process any dice formulas
             const processedResult = processDiceInText(result);
-
             saveTables();
             playSound(440, 150);
-            const comboName = document.getElementById('comboName').value || 'Unnamed Combo';
-            addToHistory('Combo: ' + comboName, result);
+
+            const metadata = { name: comboName, template, tableSlots };
             
+            let fullResultForHistory = result;
+            if (allChainResults.length > 0) {
+                fullResultForHistory += ' → ' + allChainResults.map(cr => `${cr.tableName}: ${cr.result.replace(/<[^>]*>/g, '')}`).join(' → ');
+            }
+
+            addToHistory('Combo: ' + comboName, fullResultForHistory, 'combo', metadata);
+
             closeComboBuilder();
-            
-            // Show inline result instead of alert
-            showComboResult(comboName, processedResult, usedTables);
+            showComboResultWithReroll(comboName, processedResult, usedTables, metadata, allChainResults);
         }
 
         function showComboResult(comboName, result, usedTables) {
@@ -3661,24 +3757,24 @@
             const combo = savedCombos.find(c => c.id === id);
             if (!combo) return;
 
-            // Roll directly without opening editor
             let result = combo.template;
             const usedTables = [];
-            
+            const allChainResults = [];
+            const comboName = combo.name;
+
             combo.tableSlots.forEach((tableId, index) => {
                 if (tableId) {
                     const table = tables.find(t => t.id === tableId);
                     if (table && table.entries.length > 0) {
-                        const entry = table.weighted ? 
+                        const entry = table.weighted ?
                             rollWeighted(table.entries, table.id) :
                             rollUnweighted(table.entries, table.id);
+
                         if (entry) {
-                            const mainText = entry.text;
-                            result = result.replace(new RegExp(`\\{${index}\\}`, 'g'), mainText);
+                            result = result.replace(new RegExp(`\\{${index}\\}`, 'g'), entry.text);
                             usedTables.push(table.name);
                             table.rollCount = (table.rollCount || 0) + 1;
-                            
-                            // Execute chains for saved combo rolls
+
                             if (entry.chains && entry.chains.length > 0) {
                                 entry.chains.forEach(chainTableId => {
                                     const chainTable = tables.find(t => t.id === chainTableId);
@@ -3687,7 +3783,11 @@
                                             rollWeighted(chainTable.entries, chainTable.id) :
                                             rollUnweighted(chainTable.entries, chainTable.id);
                                         if (chainEntry) {
-                                            result += ` → ${chainTable.name}: ${chainEntry.text}`;
+                                            allChainResults.push({
+                                                sourceTable: table.name,
+                                                tableName: chainTable.name,
+                                                result: processDiceInText(chainEntry.text)
+                                            });
                                             chainTable.rollCount = (chainTable.rollCount || 0) + 1;
                                         }
                                     }
@@ -3701,13 +3801,86 @@
             const processedResult = processDiceInText(result);
             saveTables();
             playSound(440, 150);
-            addToHistory('Combo: ' + combo.name, result, 'combo', { 
-                template: combo.template,
-                tableSlots: combo.tableSlots 
-            });
+
+            const metadata = { name: comboName, template: combo.template, tableSlots: combo.tableSlots };
             
+            let fullResultForHistory = result;
+            if (allChainResults.length > 0) {
+                fullResultForHistory += ' → ' + allChainResults.map(cr => `${cr.tableName}: ${cr.result.replace(/<[^>]*>/g, '')}`).join(' → ');
+            }
+
+            addToHistory('Combo: ' + comboName, fullResultForHistory, 'combo', metadata);
+
             closeComboBuilder();
-            showComboResultWithReroll(combo.name, processedResult, usedTables, combo.template, combo.tableSlots);
+            showComboResultWithReroll(comboName, processedResult, usedTables, metadata, allChainResults);
+        }
+
+        function showComboResultWithReroll(comboName, result, usedTables, metadata, chainResults = []) {
+            const existingResult = document.getElementById('quickRollResult');
+            if (existingResult) existingResult.remove();
+
+            const resultDiv = document.createElement('div');
+            resultDiv.id = 'quickRollResult';
+            resultDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1001;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            `;
+
+            const fullResultText = result.replace(/<[^>]*>/g, '') +
+                (chainResults.length > 0 ? '\\n\\n' + chainResults.map(cr => `↳ ${cr.tableName}: ${cr.result.replace(/<[^>]*>/g, '')}`).join('\\n') : '');
+
+            const metadataString = JSON.stringify(metadata).replace(/'/g, "\\'");
+
+            resultDiv.innerHTML = `
+                <div class="roll-result" style="animation: slideIn 0.3s ease-out;">
+                    <button onclick="closeQuickRollResult()" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8;">&times;</button>
+                    <h2>✨ ${escapeHtml(comboName)}</h2>
+                    <p style="margin-top: 20px; font-size: 18px; line-height: 1.6;">${result}</p>
+                    ${chainResults.length > 0 ? `
+                        <div class="chain-result" style="text-align: left;">
+                            ${chainResults.map(cr => `
+                                <div class="chain-result-item">
+                                    <div class="chain-result-label">↳ from ${escapeHtml(cr.sourceTable || 'Combo')}: ${escapeHtml(cr.tableName)}</div>
+                                    <div>${cr.result}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${usedTables.length > 0 ? `
+                        <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <small style="opacity: 0.8;">Tables used: ${usedTables.map(t => escapeHtml(t)).join(', ')}</small>
+                        </div>
+                    ` : ''}
+                    <div class="action-bar" style="justify-content: center; margin-top: 20px;">
+                        <button class="btn btn-secondary" onclick="copyToClipboard(\`${escapeHtml(fullResultText)}\`)">📋 Copy All</button>
+                        <button class="btn btn-secondary" onclick='rerollComboFromResult(${metadataString})'>↻ Reroll</button>
+                        <button class="btn btn-primary" onclick="closeQuickRollResult(); showComboBuilder()">New Combo</button>
+                    </div>
+                </div>
+            `;
+
+            const backdrop = document.createElement('div');
+            backdrop.id = 'quickRollBackdrop';
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+            `;
+            backdrop.onclick = closeQuickRollResult;
+
+            document.body.appendChild(backdrop);
+            document.body.appendChild(resultDiv);
         }
 
         // Quick Combos View
