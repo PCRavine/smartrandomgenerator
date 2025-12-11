@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - Smart Dice Roller</title>
+    <title>Privacy Policy - Smart Random Generator Pro</title>
     <style>
         * {
             margin: 0;
@@ -12,80 +12,73 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .card {
-            background: white;
+            background: #fff;
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
-            margin-bottom: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
 
-        .header {
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 30px;
-            border-bottom: 2px solid #f0f0f0;
         }
 
-        .logo {
-            font-size: 48px;
+        header h1 {
+            font-size: 1.8rem;
             margin-bottom: 10px;
         }
 
-        h1 {
-            color: #5E35B1;
-            font-size: 28px;
-            margin-bottom: 10px;
+        header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
         }
 
-        .subtitle {
-            color: #666;
-            font-size: 14px;
+        .content {
+            padding: 30px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin: 30px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+            font-size: 1.3rem;
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #555;
         }
 
         .highlight-box {
             background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #4caf50;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
         }
 
-        .highlight-box strong {
+        .highlight-box p {
+            margin: 0;
             color: #2e7d32;
-        }
-
-        h2 {
-            color: #5E35B1;
-            font-size: 20px;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #ede7f6;
-        }
-
-        h3 {
-            color: #7c4dff;
-            font-size: 16px;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            margin-bottom: 15px;
+            font-weight: 500;
         }
 
         ul {
@@ -95,52 +88,63 @@
 
         li {
             margin-bottom: 8px;
+            color: #555;
         }
 
-        a {
-            color: #5E35B1;
-            text-decoration: none;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
         }
 
-        a:hover {
-            text-decoration: underline;
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
         }
 
         .contact-box {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
             text-align: center;
         }
 
-        .contact-box .studio-name {
-            font-weight: bold;
-            color: #5E35B1;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .email-link {
-            display: inline-block;
-            background: #5E35B1;
-            color: white !important;
-            padding: 10px 25px;
-            border-radius: 25px;
-            margin-top: 10px;
-            transition: background 0.3s ease;
-        }
-
-        .email-link:hover {
-            background: #4527a0;
+        .contact-box a {
+            color: white;
+            font-weight: 600;
             text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            transition: background 0.3s;
         }
 
-        .footer {
+        .contact-box a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        footer {
             text-align: center;
             padding: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
+            background: #f8f9fa;
+            color: #888;
+            font-size: 0.85rem;
         }
 
         .badge {
@@ -149,112 +153,181 @@
             color: #2e7d32;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 0.8rem;
             font-weight: 600;
-            margin-left: 10px;
+            margin: 5px 5px 5px 0;
+        }
+
+        .badge.none {
+            background: #ffebee;
+            color: #c62828;
         }
 
         @media (max-width: 600px) {
-            .card {
-                padding: 25px;
-                border-radius: 12px;
+            body {
+                padding: 10px;
             }
 
-            h1 {
-                font-size: 24px;
+            header {
+                padding: 30px 20px;
             }
 
-            .container {
-                padding: 20px 15px;
+            header h1 {
+                font-size: 1.4rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 8px 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <div class="header">
-                <div class="logo">🎲</div>
-                <h1>Privacy Policy</h1>
-                <p class="subtitle">Smart Dice Roller by Blindrise Studio</p>
-                <p class="subtitle">Last Updated: December 11, 2025</p>
-            </div>
+        <header>
+            <h1>Privacy Policy</h1>
+            <p>Smart Random Generator Pro</p>
+            <p style="margin-top: 15px; font-size: 0.85rem;">Last Updated: December 11, 2024</p>
+        </header>
+
+        <div class="content">
+            <h2>Overview</h2>
+            <p>Smart Random Generator Pro ("the App") is a tabletop role-playing game (TTRPG) utility app developed by <strong>Blindrise Studio</strong> that helps users create and roll random tables, combos, and dice.</p>
 
             <div class="highlight-box">
-                <strong>Summary:</strong> Smart Dice Roller is designed with privacy in mind.
-                <strong>We do not collect, store, or transmit any personal data.</strong>
-                The App works entirely offline and all your data stays on your device.
+                <p>We do not collect, store, or transmit any personal data. All your data stays on your device.</p>
             </div>
 
-            <h2>Information We Do NOT Collect <span class="badge">No Tracking</span></h2>
+            <h2>Information We Do NOT Collect</h2>
+            <p>We want to be clear about what we do NOT do:</p>
             <ul>
-                <li>Personal identification information (name, email, address)</li>
-                <li>Location data</li>
-                <li>Device identifiers or advertising IDs</li>
-                <li>Usage analytics or behavioral data</li>
-                <li>Crash reports or diagnostics</li>
-                <li>Any data from your device's sensors, camera, or microphone</li>
+                <li>We do NOT collect personal information (name, email, address, phone number)</li>
+                <li>We do NOT collect location data</li>
+                <li>We do NOT track your usage or behavior</li>
+                <li>We do NOT use analytics or tracking services</li>
+                <li>We do NOT use advertising or ad networks</li>
+                <li>We do NOT share any data with third parties</li>
+                <li>We do NOT require account creation or login</li>
             </ul>
 
-            <h2>Data Storage</h2>
-            <p>All data created within the App, including:</p>
-            <ul>
-                <li>Character profiles</li>
-                <li>Saved macros and dice rolls</li>
-                <li>App preferences and settings</li>
-            </ul>
-            <p>is stored <strong>locally on your device only</strong> using standard Android storage mechanisms. This data is never transmitted to external servers.</p>
+            <div style="margin: 20px 0;">
+                <span class="badge none">No Analytics</span>
+                <span class="badge none">No Ads</span>
+                <span class="badge none">No Tracking</span>
+                <span class="badge">100% Offline</span>
+                <span class="badge">100% Private</span>
+            </div>
 
-            <h2>Third-Party Services</h2>
-            <p>Smart Dice Roller does not integrate with any third-party analytics, advertising, or tracking services.</p>
+            <h2>Information Stored Locally</h2>
+            <p>The App stores the following data <strong>locally on your device only</strong>:</p>
 
-            <h3>Google Play In-App Purchases</h3>
-            <p>If you choose to make an in-app purchase, the transaction is processed entirely by Google Play. We do not have access to your payment information. Google's privacy practices are governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</p>
+            <table>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Purpose</th>
+                    <th>Storage</th>
+                </tr>
+                <tr>
+                    <td>Random tables</td>
+                    <td>Your custom table content</td>
+                    <td>Device only</td>
+                </tr>
+                <tr>
+                    <td>Combos</td>
+                    <td>Your combo templates</td>
+                    <td>Device only</td>
+                </tr>
+                <tr>
+                    <td>Roll history</td>
+                    <td>Record of past rolls</td>
+                    <td>Device only</td>
+                </tr>
+                <tr>
+                    <td>App preferences</td>
+                    <td>Theme, settings</td>
+                    <td>Device only</td>
+                </tr>
+            </table>
 
-            <h2>Children's Privacy</h2>
-            <p>Smart Dice Roller does not knowingly collect any personal information from children under 13 years of age. Since we do not collect any personal data from any users, the App is safe for users of all ages.</p>
+            <p>This data never leaves your device, is not transmitted over the internet, is not accessible to us or any third party, and can be deleted at any time.</p>
 
             <h2>Data Security</h2>
-            <p>Since all data is stored locally on your device and no data is transmitted to external servers, your information is protected by your device's built-in security features. We recommend:</p>
+            <p>Since all data is stored locally on your device:</p>
             <ul>
-                <li>Keeping your device's operating system updated</li>
-                <li>Using device lock screen protection</li>
-                <li>Being cautious when installing apps from unknown sources</li>
+                <li>Your data is protected by your device's built-in security features</li>
+                <li>We have no access to your data</li>
+                <li>No internet connection is required to use the App</li>
+                <li>Uninstalling the App removes all associated data</li>
             </ul>
+
+            <h2>Third-Party Services</h2>
+            <p>The App does <strong>not</strong> integrate with any third-party services that collect data, including:</p>
+            <ul>
+                <li>No analytics (Google Analytics, Firebase Analytics, etc.)</li>
+                <li>No crash reporting services</li>
+                <li>No advertising networks</li>
+                <li>No social media integrations</li>
+                <li>No cloud storage or sync services</li>
+            </ul>
+
+            <h2>Permissions</h2>
+            <p>The App may request the following device permissions:</p>
+
+            <table>
+                <tr>
+                    <th>Permission</th>
+                    <th>Purpose</th>
+                    <th>Required</th>
+                </tr>
+                <tr>
+                    <td>Storage/Files</td>
+                    <td>Import/export tables and history</td>
+                    <td>Optional</td>
+                </tr>
+                <tr>
+                    <td>Camera</td>
+                    <td>Scan text from images (OCR)</td>
+                    <td>Optional</td>
+                </tr>
+            </table>
+
+            <p>These permissions are only used for the specific features described and do not transmit any data externally.</p>
+
+            <h2>Children's Privacy</h2>
+            <p>The App does not collect any personal information from anyone, including children under 13 years of age. The App is safe for users of all ages.</p>
 
             <h2>Data Deletion</h2>
-            <p>You can delete all App data at any time by:</p>
+            <p>To delete all data associated with the App:</p>
             <ul>
-                <li>Uninstalling the App from your device, or</li>
-                <li>Clearing the App's data through your device's Settings > Apps > Smart Dice Roller > Clear Data</li>
+                <li><strong>Clear App Data:</strong> Go to Settings &gt; Apps &gt; Smart Random Generator Pro &gt; Storage &gt; Clear Data</li>
+                <li><strong>Uninstall:</strong> Uninstalling the App removes all associated data</li>
             </ul>
 
-            <h2>Changes to This Privacy Policy</h2>
-            <p>We may update this Privacy Policy from time to time. Any changes will be reflected by updating the "Last Updated" date at the top of this policy. We encourage you to review this Privacy Policy periodically.</p>
-
-            <h2>Your Rights</h2>
-            <p>Depending on your jurisdiction, you may have certain rights regarding your data. However, since Smart Dice Roller does not collect any personal data, these rights are automatically fulfilled:</p>
-            <ul>
-                <li><strong>Right to Access:</strong> There is no personal data to access</li>
-                <li><strong>Right to Deletion:</strong> No personal data is stored on our servers</li>
-                <li><strong>Right to Portability:</strong> All your data is already on your device</li>
-            </ul>
+            <h2>Changes to This Policy</h2>
+            <p>We may update this Privacy Policy from time to time. Any changes will be reflected in the "Last Updated" date at the top of this document.</p>
 
             <h2>Contact Us</h2>
-            <p>If you have any questions or concerns about this Privacy Policy or the App's privacy practices, please contact us:</p>
-
             <div class="contact-box">
-                <div class="studio-name">Blindrise Studio</div>
-                <a href="mailto:blindrisestudio@gmail.com" class="email-link">blindrisestudio@gmail.com</a>
+                <p>If you have any questions about this Privacy Policy, please contact us:</p>
+                <a href="mailto:blindrisestudio@gmail.com">blindrisestudio@gmail.com</a>
             </div>
 
             <h2>Consent</h2>
-            <p>By using Smart Dice Roller, you consent to this Privacy Policy.</p>
+            <p>By using Smart Random Generator Pro, you acknowledge that you have read and understood this Privacy Policy.</p>
         </div>
 
-        <div class="footer">
-            <p>&copy; 2025 Blindrise Studio. All rights reserved.</p>
-        </div>
+        <footer>
+            <p>&copy; 2024 Blindrise Studio. All rights reserved.</p>
+            <p style="margin-top: 5px;">Smart Random Generator Pro</p>
+        </footer>
     </div>
 </body>
 </html>
